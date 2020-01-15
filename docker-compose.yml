@@ -1,0 +1,70 @@
+version: '3'
+
+services:
+  redis:
+    image: 'bitnami/redis:5.0'
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+    ports:
+      - '6379:6379'
+    volumes:
+      - 'redis_data:/bitnami/redis/data'
+  db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'db'
+      # So you don't have to use root, but you can if you like
+      MYSQL_USER: 'teamone'
+      # You can use whatever password you like
+      MYSQL_PASSWORD: 'teampass'
+      # Password for root access
+      MYSQL_ROOT_PASSWORD: 'password'
+    ports:
+      # <Port exposed> : < MySQL Port running inside container>
+      - '3306:3306'
+    expose:
+      # Opens port 3306 on the container
+      - '3306'
+      # Where our data will be persisted
+    volumes:
+      - my-db:/var/lib/mysql
+  tomcat:
+    #image: 'bitnami/tomcat:7.0.99'
+    #image: 'bitnami/tomcat:7-ol-7'
+    #image: 'bitnami/tomcat:9.0'
+    image: 'bitnami/tomcat:8.5-ol-7'
+    #image: 'bitnami/tomcat:latest'
+    #image: 'bitnami/tomcat:9.0-ol-7'
+    environment:
+      TOMCAT_USERNAME: 'tomcat1'
+      TOMCAT_PASSWORD: 'tomcat'
+      TOMCAT_ALLOW_REMOTE_MANAGEMENT: 1
+      #JAVA_HOME: '/java_home'
+      JAVA_OPTS: '-Xms256M -Xmx1024M -Djava.awt.headless=true -XX:+UseG1GC -Dfile.encoding=UTF-8 -agentlib:jdwp=transport=dt_socket,address=1043,server=y,suspend=n'
+      CATALINA_OPTS: '-Dorg.apache.el.parser.SKIP_IDENTIFIER_CHECK=true'
+      #JDBC_URL: 'jdbc:mysql://db:3306/lod?connectTimeout=0&amp;socketTimeout=0&amp;autoReconnect=true'
+      #JDBC_USER: 'teamone'
+      #JDBC_PASS: 'teampass'
+    ports:
+      - '8080:8080'
+      - '1043:1043'
+    volumes:
+      - 'tomcat_data:/bitnami'
+      #- './target/lod.war:/bitnami/tomcat/data/lod.war'
+      #- '/Library/Java/JavaVirtualMachines/jdk-12.0.2.jdk/Contents/Home/:/java_home'
+      #- '/Users/edlee1/edlee/docker/tomcat/tomcat-users.xml:/opt/bitnami/tomcat/conf/tomcat-users.xml'
+    links:
+      - db
+      - redis
+    #command: bash -c "cd /bitnami/tomcat/data && ls -ltr"
+    #command: bash -c "cd /bitnami/tomcat/data && rm lod.war && ls -ltr"
+    #command: bash -c "cd /bitnami/tomcat/data && rm -rf lod && ls -ltr"
+volumes:
+  tomcat_data:
+    driver: local
+  my-db:
+  redis_data:
+    driver: local
